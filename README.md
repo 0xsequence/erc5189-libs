@@ -13,23 +13,23 @@ The `LibDependencyCarrier` library contains functions for recording dependencies
 
 Create a `DependencyCarrier` with the `create()` function to ensure correct default settings (e.g. the `maxBlockNumber`).
 
-```sol
+```solidity
 import {LibDependencyCarrier, DependencyCarrier} from "contracts/utils/LibDependencyCarrier.sol";
 
 contract Endorser {
-	using LibDependencyCarrier for DependencyCarrier;
+  using LibDependencyCarrier for DependencyCarrier;
 
-	function _myFunction() internal {
-        DependencyCarrier memory dc = LibDependencyCarrier.create();
-	}
+  function _myFunction() internal {
+    DependencyCarrier memory dc = LibDependencyCarrier.create();
 
-	//...
+    //...
+  }
 }
 ```
 
 When adding dependencies, use the appropriate function. This ensures that overlapping dependencies are managed correctly.
 
-```sol
+```solidity
 // These functions set the maximum value unless it is already set to a lower value
 dc.addMaxBlockNumber(block.number + 1000);
 dc.addMaxBlockTimestamp(block.timestamp + 1000);
@@ -37,38 +37,38 @@ dc.addMaxBlockTimestamp(block.timestamp + 1000);
 
 When settings other `globalDependency` values, override by setting the value to `true` directly. Do not override with `false` as this will unset requirements set by other dependencies.
 
-```sol
+```solidity
 dc.globalDependency.chainId = true;
 ```
 
 For address specific dependencies, use the available functions to ensure no duplicate dependencies are created.
 
-```sol
+```solidity
 dc.addBalanceDependency(0x1234);
 dc.addCodeDependency(0x1234);
 ```
 
 Similarly, for slot dependencies, use the available functions to ensure no duplicate dependencies are created. Setting slots is ignored if `allSlots` is set for the given address.
 
-```sol
+```solidity
 dc.addSlotDependency(0x1234, 0x5678);
 ```
 
 Some values cannot be determined on chain due to visibility restrictions. Use `contraints` to notify the ERC-5189 Bundler of the required values.
 
-```sol
+```solidity
 dc.addConstraint(0x1234, 0x5678, 0x9abc); // Require specific value
 dc.addConstraint(0x1234, 0xdefg, 0x0, 0x1); // Require value in range
 ```
 
 The Endorser access the values in the `DependencyCarrier` when returning values for `isOperationReady()`.
 
-```sol
+```solidity
 function isOperationReady(
-	//...
+  //...
 ) public view returns (bool readiness, GlobalDependency memory, Dependency[] memory) {
-		//...
-		return (readiness, dc.globalDependency, dc.dependencies);
+  //...
+  return (readiness, dc.globalDependency, dc.dependencies);
 }
 ```
 
@@ -82,7 +82,7 @@ For a mapping, the slot is determined by the `keccak256` hash of the key and the
 
 For two dimensional mappings, the slot can be determined recursively.
 
-```sol
+```solidity
 mapping(bytes32 => bytes32) public map;
 mapping(bytes32 => mapping(bytes32 => bytes32)) public map2d;
 
@@ -101,13 +101,13 @@ The `LibMath` library contains optimised math functions for `min` and `max` calc
 
 ### Build
 
-```sh
+```shell
 forge build
 ```
 
 ### Test
 
-```sh
+```shell
 forge test -vvv
 ```
 
@@ -115,7 +115,7 @@ forge test -vvv
 
 Please run formatting before creating a pull request.
 
-```sh
+```shell
 forge fmt
 ```
 
