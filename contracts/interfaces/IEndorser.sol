@@ -64,4 +64,10 @@ interface IEndorser {
         uint256 baseFeeNormalizationFactor,
         bool hasUntrustedContext
     ) external returns (bool readiness, GlobalDependency memory globalDependency, Dependency[] memory dependencies);
+
+    /**
+     * Returns the address this contract should be located at when performing simulations.
+     * @return etchAddress The address this contract should be located at when performing simulations.
+     */
+    function etchAddress() external view returns (address etchAddress);
 }
