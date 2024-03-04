@@ -69,5 +69,5 @@ interface IEndorser {
      * Returns the address this contract should be located at when performing simulations.
      * @return etchAddress The address this contract should be located at when performing simulations.
      */
-    function etchAddress() external view returns (address etchAddress);
+    function etchAddress() external view returns (address payable etchAddress);
 }
