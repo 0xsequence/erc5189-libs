@@ -63,5 +63,24 @@ interface IEndorser {
         uint256 baseFeeScalingFactor,
         uint256 baseFeeNormalizationFactor,
         bool hasUntrustedContext
-    ) external returns (bool readiness, GlobalDependency memory globalDependency, Dependency[] memory dependencies);
+    )
+        external
+        returns (bool readiness, GlobalDependency memory globalDependency, Dependency[] memory dependencies);
+
+    struct Replacement {
+        address oldAddr;
+        address newAddr;
+        SlotReplacement[] slots;
+    }
+
+    struct SlotReplacement {
+        bytes32 slot;
+        bytes32 value;
+    }
+
+    /**
+     * @notice Returns the simulation settings the bundler should use when calling the endorser.
+     * @return replacements The replacements to apply when calling isOperationReady.
+     */
+    function simulationSettings() external view returns (Replacement[] memory replacements);
 }
