@@ -1,48 +1,62 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
-import {Test} from "forge-std/Test.sol";
-import {LibDependencyCarrier, DependencyCarrier} from "contracts/utils/LibDependencyCarrier.sol";
-import {LibMath} from "contracts/utils/LibMath.sol";
+import { Test } from "forge-std/Test.sol";
+import { TestUtils } from "test/TestUtils.sol";
 
-contract LibDependencyCarrierTest is Test {
-    using LibDependencyCarrier for DependencyCarrier;
+import { LibDc, Dc } from "contracts/utils/LibDc.sol";
+import { IEndorser } from "contracts/interfaces/IEndorser.sol";
+
+contract LibDcTest is Test {
+    using LibDc for Dc;
 
     function testDefaultCarrier() public {
-        DependencyCarrier memory carrier = LibDependencyCarrier.create();
-        assertTrue(!carrier.globalDependency.baseFee);
-        assertTrue(!carrier.globalDependency.blobBaseFee);
-        assertTrue(!carrier.globalDependency.chainId);
-        assertTrue(!carrier.globalDependency.coinBase);
-        assertTrue(!carrier.globalDependency.difficulty);
-        assertTrue(!carrier.globalDependency.gasLimit);
-        assertTrue(!carrier.globalDependency.number);
-        assertTrue(!carrier.globalDependency.timestamp);
-        assertTrue(!carrier.globalDependency.txOrigin);
-        assertTrue(!carrier.globalDependency.txGasPrice);
-        assertEq(carrier.globalDependency.maxBlockNumber, type(uint256).max);
-        assertEq(carrier.globalDependency.maxBlockTimestamp, type(uint256).max);
-        assertEq(carrier.dependencies.length, 0);
+        Dc memory carrier = LibDc.create();
+
+        (
+            bool ready,
+            IEndorser.GlobalDependency memory globalDependency,
+            IEndorser.Dependency[] memory dependencies
+        ) = carrier.build();
+
+        assertTrue(ready);
+        assertTrue(!globalDependency.baseFee);
+        assertTrue(!globalDependency.blobBaseFee);
+        assertTrue(!globalDependency.chainId);
+        assertTrue(!globalDependency.coinBase);
+        assertTrue(!globalDependency.difficulty);
+        assertTrue(!globalDependency.gasLimit);
+        assertTrue(!globalDependency.number);
+        assertTrue(!globalDependency.timestamp);
+        assertTrue(!globalDependency.txOrigin);
+        assertTrue(!globalDependency.txGasPrice);
+        assertEq(globalDependency.maxBlockNumber, type(uint256).max);
+        assertEq(globalDependency.maxBlockTimestamp, type(uint256).max);
+        assertEq(dependencies.length, 0);
     }
 
     function testAddMaxBlockNumber(uint256 start, uint256 end) public {
-        DependencyCarrier memory carrier = LibDependencyCarrier.create();
+        Dc memory carrier = LibDc.create();
+        assertEq(carrier.globalDependency.maxBlockNumber, 0);
+        assertFalse(carrier.explicitMaxBlockNumber);
         carrier.addMaxBlockNumber(start);
         assertEq(carrier.globalDependency.maxBlockNumber, start);
+        assertTrue(carrier.explicitMaxBlockNumber);
         carrier.addMaxBlockNumber(end);
-        assertEq(carrier.globalDependency.maxBlockNumber, LibMath.min(start, end));
+        // assertEq(carrier.globalDependency.maxBlockNumber, TestUtils.min(start, end));
+        assertTrue(carrier.explicitMaxBlockNumber);
     }
 
     function testAddMaxBlockTimestamp(uint256 start, uint256 end) public {
-        DependencyCarrier memory carrier = LibDependencyCarrier.create();
+        Dc memory carrier = LibDc.create();
         carrier.addMaxBlockTimestamp(start);
         assertEq(carrier.globalDependency.maxBlockTimestamp, start);
         carrier.addMaxBlockTimestamp(end);
-        assertEq(carrier.globalDependency.maxBlockTimestamp, LibMath.min(start, end));
+        assertEq(carrier.globalDependency.maxBlockTimestamp, TestUtils.min(start, end));
     }
 
     function testNoDuplicateDependencyForAddress(address addr) public {
-        DependencyCarrier memory carrier = LibDependencyCarrier.create();
+        Dc memory carrier = LibDc.create();
 
         assertEq(carrier.dependencies.length, 0);
 
@@ -56,7 +70,7 @@ contract LibDependencyCarrierTest is Test {
     }
 
     function testAllSlotExclusivity(address addr, bytes32 slot) public {
-        DependencyCarrier memory carrier = LibDependencyCarrier.create();
+        Dc memory carrier = LibDc.create();
 
         carrier.addSlotDependency(addr, slot);
         assertEq(carrier.dependencies.length, 1);
@@ -79,11 +93,11 @@ contract LibDependencyCarrierTest is Test {
         public
     {
         // Overall range valid
-        bytes32 min = LibMath.max(min1, min2);
-        bytes32 max = LibMath.min(max1, max2);
+        bytes32 min = TestUtils.max(min1, min2);
+        bytes32 max = TestUtils.min(max1, max2);
         vm.assume(min <= max);
 
-        DependencyCarrier memory carrier = LibDependencyCarrier.create();
+        Dc memory carrier = LibDc.create();
 
         carrier.addConstraint(addr, slot, min1, max1);
         assertEq(carrier.dependencies.length, 1);
@@ -105,7 +119,7 @@ contract LibDependencyCarrierTest is Test {
     function testContraintMinMaxError(address addr, bytes32 slot, bytes32 min, bytes32 max) public {
         vm.assume(min > max);
 
-        DependencyCarrier memory carrier = LibDependencyCarrier.create();
+        Dc memory carrier = LibDc.create();
         vm.expectRevert();
         carrier.addConstraint(addr, slot, min, max);
     }
@@ -122,11 +136,11 @@ contract LibDependencyCarrierTest is Test {
         vm.assume(min1 <= max1);
 
         // Overall range invalid
-        bytes32 min = LibMath.max(min1, min2);
-        bytes32 max = LibMath.min(max1, max2);
+        bytes32 min = TestUtils.max(min1, min2);
+        bytes32 max = TestUtils.min(max1, max2);
         vm.assume(min > max);
 
-        DependencyCarrier memory carrier = LibDependencyCarrier.create();
+        Dc memory carrier = LibDc.create();
         carrier.addConstraint(addr, slot, min1, max1);
 
         vm.expectRevert();

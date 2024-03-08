@@ -1,35 +1,62 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
-import {LibMath} from "./LibMath.sol";
-import {IEndorser} from "../interfaces/IEndorser.sol";
+import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
+import { IEndorser } from "../interfaces/IEndorser.sol";
 
-struct DependencyCarrier {
+struct Dc {
+    bool hasOperation;
+    bool explicitMaxBlockNumber;
+    bool explicitMaxBlockTimestamp;
+
+    IEndorser.Operation operation;
+
     IEndorser.GlobalDependency globalDependency;
     IEndorser.Dependency[] dependencies;
 }
 
-library LibDependencyCarrier {
-    using LibDependencyCarrier for DependencyCarrier;
+library LibDc {
+    using FixedPointMathLib for *;
+    using LibDc for Dc;
 
-    function create() internal pure returns (DependencyCarrier memory _carrier) {
-        _carrier.globalDependency.maxBlockNumber = type(uint256).max;
-        _carrier.globalDependency.maxBlockTimestamp = type(uint256).max;
-
-        _carrier.dependencies = new IEndorser.Dependency[](0);
+    function create() internal pure returns (Dc memory _c) {}
+    function create(IEndorser.Operation memory _operation) internal pure returns (Dc memory c) {
+        c.operation = _operation;
+        c.hasOperation = true;
     }
 
-    function addMaxBlockNumber(DependencyCarrier memory _carrier, uint256 _maxBlockNumber) internal pure {
-        _carrier.globalDependency.maxBlockNumber =
-            LibMath.min(_carrier.globalDependency.maxBlockNumber, _maxBlockNumber);
+    function build(Dc memory _c) internal pure returns (bool, IEndorser.GlobalDependency memory, IEndorser.Dependency[] memory) {
+        if (!_c.explicitMaxBlockNumber) {
+            _c.globalDependency.maxBlockNumber = type(uint256).max;
+        }
+
+        if (!_c.explicitMaxBlockTimestamp) {
+            _c.globalDependency.maxBlockTimestamp = type(uint256).max;
+        }
+
+        return (true, _c.globalDependency, _c.dependencies);
     }
 
-    function addMaxBlockTimestamp(DependencyCarrier memory _carrier, uint256 _maxBlockTimestamp) internal pure {
-        _carrier.globalDependency.maxBlockTimestamp =
-            LibMath.min(_carrier.globalDependency.maxBlockTimestamp, _maxBlockTimestamp);
+    function addMaxBlockNumber(Dc memory _carrier, uint256 _maxBlockNumber) internal pure {
+        if (!_carrier.explicitMaxBlockNumber) {
+            _carrier.globalDependency.maxBlockNumber = _maxBlockNumber;
+            _carrier.explicitMaxBlockNumber = true;
+        } else {
+            _carrier.globalDependency.maxBlockNumber = _carrier.globalDependency.maxBlockNumber.min(_maxBlockNumber);
+        }
+
     }
 
-    function dependencyFor(DependencyCarrier memory _carrier, address _addr)
+    function addMaxBlockTimestamp(Dc memory _carrier, uint256 _maxBlockTimestamp) internal pure {
+        if (!_carrier.explicitMaxBlockTimestamp) {
+            _carrier.globalDependency.maxBlockTimestamp = _maxBlockTimestamp;
+            _carrier.explicitMaxBlockTimestamp = true;
+        } else {
+            _carrier.globalDependency.maxBlockTimestamp = _carrier.globalDependency.maxBlockTimestamp.min(_maxBlockTimestamp);
+        }
+    }
+
+    function dependencyFor(Dc memory _carrier, address _addr)
         internal
         pure
         returns (IEndorser.Dependency memory)
@@ -57,26 +84,26 @@ library LibDependencyCarrier {
         }
     }
 
-    function addBalanceDependency(DependencyCarrier memory _carrier, address _addr) internal pure {
+    function addBalanceDependency(Dc memory _carrier, address _addr) internal pure {
         dependencyFor(_carrier, _addr).balance = true;
     }
 
-    function addCodeDependency(DependencyCarrier memory _carrier, address _addr) internal pure {
+    function addCodeDependency(Dc memory _carrier, address _addr) internal pure {
         dependencyFor(_carrier, _addr).code = true;
     }
 
-    function addNonceDependency(DependencyCarrier memory _carrier, address _addr) internal pure {
+    function addNonceDependency(Dc memory _carrier, address _addr) internal pure {
         dependencyFor(_carrier, _addr).nonce = true;
     }
 
-    function addAllSlotsDependency(DependencyCarrier memory _carrier, address _addr) internal pure {
+    function addAllSlotsDependency(Dc memory _carrier, address _addr) internal pure {
         IEndorser.Dependency memory dep = dependencyFor(_carrier, _addr);
         dep.allSlots = true;
         // Slots and allSlots are mutually exclusive
         dep.slots = new bytes32[](0);
     }
 
-    function addSlotDependency(DependencyCarrier memory _carrier, address _addr, bytes32 _slot) internal pure {
+    function addSlotDependency(Dc memory _carrier, address _addr, bytes32 _slot) internal pure {
         unchecked {
             IEndorser.Dependency memory dep = dependencyFor(_carrier, _addr);
 
@@ -101,14 +128,14 @@ library LibDependencyCarrier {
         }
     }
 
-    function addConstraint(DependencyCarrier memory _carrier, address _addr, bytes32 _slot, address _value)
+    function addConstraint(Dc memory _carrier, address _addr, bytes32 _slot, address _value)
         internal
         pure
     {
         _carrier.addConstraint(_addr, _slot, bytes32(uint256(uint160(_value))));
     }
 
-    function addConstraint(DependencyCarrier memory _carrier, address _addr, bytes32 _slot, bytes32 _value)
+    function addConstraint(Dc memory _carrier, address _addr, bytes32 _slot, bytes32 _value)
         internal
         pure
     {
@@ -116,7 +143,7 @@ library LibDependencyCarrier {
     }
 
     function addConstraint(
-        DependencyCarrier memory _carrier,
+        Dc memory _carrier,
         address _addr,
         bytes32 _slot,
         bytes32 _minValue,
@@ -138,8 +165,8 @@ library LibDependencyCarrier {
 
             if (exists) {
                 // If it exists we overlap the current constraint with the new values
-                _minValue = LibMath.max(constraint.minValue, _minValue);
-                _maxValue = LibMath.min(constraint.maxValue, _maxValue);
+                _minValue = bytes32(FixedPointMathLib.max(uint256(constraint.minValue), uint256(_minValue)));
+                _maxValue = bytes32(FixedPointMathLib.min(uint256(constraint.maxValue), uint256(_maxValue)));
             }
 
             constraint.slot = _slot;
@@ -164,7 +191,7 @@ library LibDependencyCarrier {
         }
     }
 
-    function merge(DependencyCarrier memory _carrier, DependencyCarrier memory _next) internal pure {
+    function merge(Dc memory _carrier, Dc memory _next) internal pure {
         unchecked {
             _carrier.globalDependency.baseFee = _carrier.globalDependency.baseFee || _next.globalDependency.baseFee;
             _carrier.globalDependency.blobBaseFee =
@@ -181,9 +208,9 @@ library LibDependencyCarrier {
             _carrier.globalDependency.txGasPrice =
                 _carrier.globalDependency.txGasPrice || _next.globalDependency.txGasPrice;
             _carrier.globalDependency.maxBlockNumber =
-                LibMath.min(_carrier.globalDependency.maxBlockNumber, _next.globalDependency.maxBlockNumber);
+                _carrier.globalDependency.maxBlockNumber.min(_next.globalDependency.maxBlockNumber);
             _carrier.globalDependency.maxBlockTimestamp =
-                LibMath.min(_carrier.globalDependency.maxBlockTimestamp, _next.globalDependency.maxBlockTimestamp);
+                _carrier.globalDependency.maxBlockTimestamp.min(_next.globalDependency.maxBlockTimestamp);
 
             uint256 len = _next.dependencies.length;
             for (uint256 i = 0; i != len; i++) {

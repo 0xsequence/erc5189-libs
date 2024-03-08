@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
-// solhint-disable no-inline-assembly
+import { LibString as LibStringSolady } from "solady/utils/LibString.sol";
 
 contract LibString {
-    using LibString for string;
+    using LibStringSolady for *;
 
     function s(string memory _a) internal pure returns (string memory) {
         return _a;
