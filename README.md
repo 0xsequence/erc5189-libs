@@ -78,6 +78,31 @@ function isOperationReady(
 }
 ```
 
+### Chaining changes
+
+The library supports the builder pattern, allowing for chaining changes. This pattern is entirely optional, as the `Dc` is modified in place.
+
+```solidity
+Dc memory dc = LibDc.create()
+  .addBaseFee()
+  .addBlobBaseFee()
+  .addChainId()
+  .addCoinBase()
+  .addDifficulty()
+  .addGasLimit()
+  .addNumber()
+  .addTimestamp()
+  .addTxOrigin()
+  .addTxGasPrice()
+  .addMaxBlockNumber(block.number + 1000)
+  .addMaxBlockTimestamp(block.timestamp + 1000)
+  .addBalanceDependency(0x1234)
+  .addCodeDependency(0x1234)
+  .addSlotDependency(0x1234, 0x5678)
+  .addConstraint(0x1234, 0x5678, 0x9abc)
+  .addConstraint(0x1234, 0xdefg, 0x0, 0x1);
+```
+
 ## LibSlot
 
 The `LibSlot` library contains functions for determining with storage mappings slots.
