@@ -37,35 +37,40 @@ interface IEndorser {
     }
 
     /**
-     * @notice Checks if an operation is endorsed for execution.
-     * @param entrypoint The entrypoint to of the operation.
-     * @param data The data to send to the entrypoint.
-     * @param endorserCallData Additional data for endorser processing.
-     * @param gasLimit The gas limit for the operation.
-     * @param maxFeePerGas The maximum fee per gas for the operation.
-     * @param maxPriorityFeePerGas The maximum priority fee per gas for the operation.
-     * @param feeToken The address of the ERC-20 token used to repay the sender. `address(0)` for the native token.
-     * @param baseFeeScalingFactor The scaling factor for the base fee.
-     * @param baseFeeNormalizationFactor The normalization factor for the base fee.
-     * @param hasUntrustedContext Whether the operation has an untrusted context.
-     * @return readiness Whether the operation is ready for execution.
-     * @return globalDependency The global dependency of the operation.
-     * @return dependencies The dependencies of the operation.
+     * @title Operation
+     * @notice Represents an operation with its execution parameters and metadata for endorsement checks.
+     * @dev This struct encapsulates all necessary details to execute and endorse an operation. It includes:
+     * - `entrypoint`: The entrypoint address of the operation.
+     * - `data`: The calldata to be sent to the entrypoint.
+     * - `endorserCallData`: Additional data required for the endorser's processing.
+     * - `fixedGas`: The fixed gas amount to be used for the operation.
+     * - `gasLimit`: The maximum gas allowed for executing the operation.
+     * - `maxFeePerGas`: The maximum fee per gas willing to be paid for the operation.
+     * - `maxPriorityFeePerGas`: The maximum priority fee per gas to incentivize miners.
+     * - `feeToken`: The ERC-20 token address used for transaction fee payment. Uses `address(0)` for the native token.
+     * - `feeScalingFactor`: A factor to scale the base fee, adjusting operation cost in response to network congestion.
+     * - `feeNormalizationFactor`: A factor for normalizing the base fee, facilitating fee estimation.
+     * - `hasUntrustedContext`: Indicates if the operation is executed in a context that cannot be fully trusted.
      */
-    function isOperationReady(
-        address entrypoint,
-        bytes calldata data,
-        bytes calldata endorserCallData,
-        uint256 gasLimit,
-        uint256 maxFeePerGas,
-        uint256 maxPriorityFeePerGas,
-        address feeToken,
-        uint256 baseFeeScalingFactor,
-        uint256 baseFeeNormalizationFactor,
-        bool hasUntrustedContext
-    )
-        external
-        returns (bool readiness, GlobalDependency memory globalDependency, Dependency[] memory dependencies);
+    struct Operation {
+        address entrypoint;
+        bytes data;
+        bytes endorserCallData;
+        uint256 fixedGas;
+        uint256 gasLimit;
+        uint256 maxFeePerGas;
+        uint256 maxPriorityFeePerGas;
+        address feeToken;
+        uint256 feeScalingFactor;
+        uint256 feeNormalizationFactor;
+        bool hasUntrustedContext;
+    }
+
+    function isOperationReady(Operation calldata operation) external returns (
+        bool readiness,
+        GlobalDependency memory globalDependency,
+        Dependency[] memory dependencies
+    );
 
     struct Replacement {
         address oldAddr;

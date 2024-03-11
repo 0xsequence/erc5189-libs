@@ -7,38 +7,44 @@ This repository contains libraries for interacting with [ERC-5189](https://eips.
 The `IEndorser` interface is an interface for ERC-5189 Endorsers.
 For more information, see the [ERC-5189 specification](https://eips.ethereum.org/EIPS/eip-5189).
 
-## LibDependencyCarrier
+## LibDc
 
-The `LibDependencyCarrier` library contains functions for recording dependencies by an ERC-5189 Endorser.
+The `LibDc` library contains functions for constructing dependency lists for ERC-5189 Endorsers, it uses a builder pattern that simplifies the process of creating dependencies.
 
-Create a `DependencyCarrier` with the `create()` function to ensure correct default settings (e.g. the `maxBlockNumber`).
+Create a `Dc` (DependencyCarrier) with the `create()`, an optional `IEndorser.Operation` can be passed to it, this will allow the library to also perform assertions on the operation.
 
 ```solidity
-import {LibDependencyCarrier, DependencyCarrier} from "contracts/utils/LibDependencyCarrier.sol";
+import { Dc, LibDc } from "contracts/LibDc.sol";
 
 contract Endorser {
-  using LibDependencyCarrier for DependencyCarrier;
+  using LibDc for Dc;
 
   function _myFunction() internal {
-    DependencyCarrier memory dc = LibDependencyCarrier.create();
+    Dc memory dc = LibDc.create();
 
     //...
   }
 }
 ```
 
-When adding dependencies, use the appropriate function. This ensures that overlapping dependencies are managed correctly.
+You can define global dependencies using the available functions.
 
 ```solidity
+// These can only be set once
+dc.addBaseFee();
+dc.addBlobBaseFee();
+dc.addChainId();
+dc.addCoinBase();
+dc.addDifficulty();
+dc.addGasLimit();
+dc.addNumber();
+dc.addTimestamp();
+dc.addTxOrigin();
+dc.addTxGasPrice();
+
 // These functions set the maximum value unless it is already set to a lower value
 dc.addMaxBlockNumber(block.number + 1000);
 dc.addMaxBlockTimestamp(block.timestamp + 1000);
-```
-
-When settings other `globalDependency` values, override by setting the value to `true` directly. Do not override with `false` as this will unset requirements set by other dependencies.
-
-```solidity
-dc.globalDependency.chainId = true;
 ```
 
 For address specific dependencies, use the available functions to ensure no duplicate dependencies are created.
@@ -61,15 +67,40 @@ dc.addConstraint(0x1234, 0x5678, 0x9abc); // Require specific value
 dc.addConstraint(0x1234, 0xdefg, 0x0, 0x1); // Require value in range
 ```
 
-The Endorser access the values in the `DependencyCarrier` when returning values for `isOperationReady()`.
+The `build()` method will return the return arguments for `isOperationReady()`.
 
 ```solidity
 function isOperationReady(
   //...
 ) public view returns (bool readiness, GlobalDependency memory, Dependency[] memory) {
   //...
-  return (readiness, dc.globalDependency, dc.dependencies);
+  return dc.build();
 }
+```
+
+### Chaining changes
+
+The library supports the builder pattern, allowing for chaining changes. This pattern is entirely optional, as the `Dc` is modified in place.
+
+```solidity
+Dc memory dc = LibDc.create()
+  .addBaseFee()
+  .addBlobBaseFee()
+  .addChainId()
+  .addCoinBase()
+  .addDifficulty()
+  .addGasLimit()
+  .addNumber()
+  .addTimestamp()
+  .addTxOrigin()
+  .addTxGasPrice()
+  .addMaxBlockNumber(block.number + 1000)
+  .addMaxBlockTimestamp(block.timestamp + 1000)
+  .addBalanceDependency(0x1234)
+  .addCodeDependency(0x1234)
+  .addSlotDependency(0x1234, 0x5678)
+  .addConstraint(0x1234, 0x5678, 0x9abc)
+  .addConstraint(0x1234, 0xdefg, 0x0, 0x1);
 ```
 
 ## LibSlot
@@ -93,9 +124,41 @@ map2d[0x5678][0x9abc] = 0xffff; // map2d at 0x1
 LibSlot.getMappingStorageSlot(LibSlot.getMappingStorageSlot(0x1, 0x5678), 0x9abc);
 ```
 
-## LibMath
+## LibString
 
-The `LibMath` library contains optimised math functions for `min` and `max` calculations.
+The `LibString` allows for creating verbose string errors, for debugging purposes. These verbose strings can be used to generate detailed revert messages, which can be helpful when building complex endorser contracts.
+
+```solidity
+import { LibString } from "contracts/LibString.sol";
+
+contract Example {
+  using LibString for *;
+
+  function example() public {
+    // Concatenate strings
+    // "Hola mundo!"
+    string memory s1 = "Hola ".c("mundo!".s());
+
+    // Concatenate uints and strings
+    // "Hola 123!"
+    string memory s2 = "Hola ".c(123).c("!");
+
+    // Concatenate bytes32 and strings
+    // Hex formatted: df5f697d36135c1a2b807e8cdd39a4c3a6e9aa5295c6f750a0d674daf840617d
+    string memory s3 = "Hex formatted: ".c(bytes32(0xdf5f697d36135c1a2b807e8cdd39a4c3a6e9aa5295c6f750a0d674daf840617d));
+
+    // Concatenate address and strings
+    // "Address: 0x0xe28c4384F57e38775B288C5becDb3B28f2b0AEdb"
+    string memory s4 = "Address: ".c(address(0xe28c4384F57e38775B288C5becDb3B28f2b0AEdb));
+
+    // Concatenate byte arrays and strings
+    // "Bytes: 0x1234"
+    string memory s5 = "Bytes: ".c(hex"1234");
+  }
+}
+```
+
+> Notice that concatenating two strings requires calling `.s()` on the argument, this is to avoid ambiguity when concatenating strings and other types. The `solc` compiler will not allow concatenating two strings without an explicit conversion.
 
 ## Usage
 
