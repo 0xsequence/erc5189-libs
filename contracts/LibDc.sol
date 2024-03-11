@@ -481,7 +481,7 @@ library LibDc {
 
     function requireTrustedContext(Dc memory _c) internal pure returns (Dc memory) {
         if (_c.getOperation().hasUntrustedContext) {
-            revert("Operation does not have untrusted context");
+            revert("Operation has untrusted context");
         }
         return _c;
     }
