@@ -1,8 +1,12 @@
 //SPDX-License-Identifier: UNLICENSED
+//solhint-disable custom-errors
 pragma solidity ^0.8.18;
 
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
+
 import { IEndorser } from "../interfaces/IEndorser.sol";
+import { LibString } from "./LibString.sol";
+
 
 struct Dc {
     bool hasOperation;
@@ -17,6 +21,7 @@ struct Dc {
 
 library LibDc {
     using FixedPointMathLib for *;
+    using LibString for *;
     using LibDc for Dc;
 
     function create() internal pure returns (Dc memory _c) {}
@@ -174,7 +179,6 @@ library LibDc {
             constraint.maxValue = _maxValue;
 
             if (constraint.minValue > constraint.maxValue) {
-                //solhint-disable-next-line custom-errors
                 revert("Constraint min value is greater than max value");
             }
 
@@ -233,6 +237,106 @@ library LibDc {
                     _carrier.addConstraint(nextDep.addr, constraint.slot, constraint.minValue, constraint.maxValue);
                 }
             }
+        }
+    }
+
+    function setOperation(Dc memory _carrier, IEndorser.Operation memory _operation) internal pure {
+        if (_carrier.hasOperation) {
+            revert("Operation already set");
+        }
+
+        _carrier.operation = _operation;
+        _carrier.hasOperation = true;
+    }
+
+    function getOperation(Dc memory _carrier) internal pure returns (IEndorser.Operation memory) {
+        if (!_carrier.hasOperation) {
+            revert("Operation not set");
+        }
+
+        return _carrier.operation;
+    }
+
+
+    function requireEntrypoint(Dc memory _carrier, address _entrypoint) internal pure {
+        if (_entrypoint != _carrier.getOperation().entrypoint) {
+            revert("Entrypoint mismatch: "
+                .c(_entrypoint)
+                .c(" != ".s())
+                .c(_carrier.getOperation().entrypoint)
+            );
+        }
+    }
+
+    function requireInnerGasLimit(Dc memory _carrier, uint256 _innerGasLimit) internal pure {
+        if (_innerGasLimit > _carrier.getOperation().gasLimit) {
+            revert("Inner gas limit exceeds operation gas limit: "
+                .c(_innerGasLimit)
+                .c(" > ".s())
+                .c(_carrier.getOperation().gasLimit)
+            );
+        }
+    }
+
+    function requireMaxFeePerGas(Dc memory _carrier, uint256 _maxFeePerGas) internal pure {
+        if (_maxFeePerGas < _carrier.getOperation().maxFeePerGas) {
+            revert("Max fee per gas is less than operation max fee per gas: "
+                .c(_maxFeePerGas)
+                .c(" < ".s())
+                .c(_carrier.getOperation().maxFeePerGas)
+            );
+        }
+    }
+
+    function requireMaxPriorityFeePerGas(Dc memory _carrier, uint256 _maxPriorityFeePerGas) internal pure {
+        if (_maxPriorityFeePerGas < _carrier.getOperation().maxPriorityFeePerGas) {
+            revert("Max priority fee per gas is less than operation max priority fee per gas: "
+                .c(_maxPriorityFeePerGas)
+                .c(" < ".s())
+                .c(_carrier.getOperation().maxPriorityFeePerGas)
+            );
+        }
+    }
+
+    function requireFeeToken(Dc memory _carrier, address _feeToken) internal pure {
+        if (_feeToken != _carrier.getOperation().feeToken) {
+            revert("Fee token mismatch: "
+                .c(_feeToken)
+                .c(" != ".s())
+                .c(_carrier.getOperation().feeToken)
+            );
+        }
+    }
+
+    function requireScalingFactor(Dc memory _carrier, uint256 _scalingFactor) internal pure {
+        if (_scalingFactor != _carrier.getOperation().baseFeeScalingFactor) {
+            revert("Scaling factor mismatch: "
+                .c(_scalingFactor)
+                .c(" != ".s())
+                .c(_carrier.getOperation().baseFeeScalingFactor)
+            );
+        }
+    }
+
+    function requireNormalizationFactor(Dc memory _carrier, uint256 _normalizationFactor) internal pure {
+        if (_normalizationFactor != _carrier.getOperation().baseFeeNormalizationFactor) {
+            revert("Normalization factor mismatch: "
+                .c(_normalizationFactor)
+                .c(" != ".s())
+                .c(_carrier.getOperation().baseFeeNormalizationFactor)
+            );
+        }
+    }
+
+    function requireTrustedContext(Dc memory _carrier) internal pure {
+        if (_carrier.getOperation().hasUntrustedContext) {
+            revert("Operation does not have untrusted context");
+        }
+    }
+
+    function requireUntrustedContext(Dc memory _carrier) internal pure {
+        if (!_carrier.getOperation().hasUntrustedContext) {
+            revert("Operation does not have untrusted context");
         }
     }
 }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import { LibString as LibStringSolady } from "solady/utils/LibString.sol";
 
-contract LibString {
+library LibString {
     using LibStringSolady for *;
 
     function s(string memory _a) internal pure returns (string memory) {
