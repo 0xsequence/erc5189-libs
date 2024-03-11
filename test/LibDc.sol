@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import { Test } from "forge-std/Test.sol";
 import { TestUtils } from "test/TestUtils.sol";
 
-import { LibDc, Dc } from "contracts/utils/LibDc.sol";
+import { LibDc, Dc } from "contracts/LibDc.sol";
 import { IEndorser } from "contracts/interfaces/IEndorser.sol";
 
 contract LibDcTest is Test {
@@ -37,56 +37,55 @@ contract LibDcTest is Test {
 
     function testAddMaxBlockNumber(uint256 start, uint256 end) public {
         Dc memory carrier = LibDc.create();
-        assertEq(carrier.globalDependency.maxBlockNumber, 0);
-        assertFalse(carrier.explicitMaxBlockNumber);
+        assertEq(carrier._globalDependency.maxBlockNumber, 0);
+        assertFalse(carrier._explicitMaxBlockNumber);
         carrier.addMaxBlockNumber(start);
-        assertEq(carrier.globalDependency.maxBlockNumber, start);
-        assertTrue(carrier.explicitMaxBlockNumber);
+        assertEq(carrier._globalDependency.maxBlockNumber, start);
+        assertTrue(carrier._explicitMaxBlockNumber);
         carrier.addMaxBlockNumber(end);
-        // assertEq(carrier.globalDependency.maxBlockNumber, TestUtils.min(start, end));
-        assertTrue(carrier.explicitMaxBlockNumber);
+        assertTrue(carrier._explicitMaxBlockNumber);
     }
 
     function testAddMaxBlockTimestamp(uint256 start, uint256 end) public {
         Dc memory carrier = LibDc.create();
         carrier.addMaxBlockTimestamp(start);
-        assertEq(carrier.globalDependency.maxBlockTimestamp, start);
+        assertEq(carrier._globalDependency.maxBlockTimestamp, start);
         carrier.addMaxBlockTimestamp(end);
-        assertEq(carrier.globalDependency.maxBlockTimestamp, TestUtils.min(start, end));
+        assertEq(carrier._globalDependency.maxBlockTimestamp, TestUtils.min(start, end));
     }
 
     function testNoDuplicateDependencyForAddress(address addr) public {
         Dc memory carrier = LibDc.create();
 
-        assertEq(carrier.dependencies.length, 0);
+        assertEq(carrier._dependencies.length, 0);
 
         carrier.addAllSlotsDependency(addr);
-        assertEq(carrier.dependencies.length, 1);
-        assertEq(carrier.dependencies[0].addr, addr);
+        assertEq(carrier._dependencies.length, 1);
+        assertEq(carrier._dependencies[0].addr, addr);
 
         carrier.addBalanceDependency(addr);
-        assertEq(carrier.dependencies.length, 1); // Still 1
-        assertEq(carrier.dependencies[0].addr, addr);
+        assertEq(carrier._dependencies.length, 1); // Still 1
+        assertEq(carrier._dependencies[0].addr, addr);
     }
 
     function testAllSlotExclusivity(address addr, bytes32 slot) public {
         Dc memory carrier = LibDc.create();
 
         carrier.addSlotDependency(addr, slot);
-        assertEq(carrier.dependencies.length, 1);
-        assertEq(carrier.dependencies[0].addr, addr);
-        assertEq(carrier.dependencies[0].slots.length, 1);
-        assertEq(carrier.dependencies[0].slots[0], slot);
+        assertEq(carrier._dependencies.length, 1);
+        assertEq(carrier._dependencies[0].addr, addr);
+        assertEq(carrier._dependencies[0].slots.length, 1);
+        assertEq(carrier._dependencies[0].slots[0], slot);
 
         // Removes slots
         carrier.addAllSlotsDependency(addr);
-        assertEq(carrier.dependencies.length, 1);
-        assertEq(carrier.dependencies[0].slots.length, 0);
+        assertEq(carrier._dependencies.length, 1);
+        assertEq(carrier._dependencies[0].slots.length, 0);
 
         // Ignored
         carrier.addSlotDependency(addr, slot);
-        assertEq(carrier.dependencies.length, 1);
-        assertEq(carrier.dependencies[0].slots.length, 0);
+        assertEq(carrier._dependencies.length, 1);
+        assertEq(carrier._dependencies[0].slots.length, 0);
     }
 
     function testConstraintOverlap(address addr, bytes32 slot, bytes32 min1, bytes32 max1, bytes32 min2, bytes32 max2)
@@ -100,20 +99,20 @@ contract LibDcTest is Test {
         Dc memory carrier = LibDc.create();
 
         carrier.addConstraint(addr, slot, min1, max1);
-        assertEq(carrier.dependencies.length, 1);
-        assertEq(carrier.dependencies[0].addr, addr);
-        assertEq(carrier.dependencies[0].constraints.length, 1);
-        assertEq(carrier.dependencies[0].constraints[0].slot, slot);
-        assertEq(carrier.dependencies[0].constraints[0].minValue, min1);
-        assertEq(carrier.dependencies[0].constraints[0].maxValue, max1);
+        assertEq(carrier._dependencies.length, 1);
+        assertEq(carrier._dependencies[0].addr, addr);
+        assertEq(carrier._dependencies[0].constraints.length, 1);
+        assertEq(carrier._dependencies[0].constraints[0].slot, slot);
+        assertEq(carrier._dependencies[0].constraints[0].minValue, min1);
+        assertEq(carrier._dependencies[0].constraints[0].maxValue, max1);
 
         carrier.addConstraint(addr, slot, min2, max2);
-        assertEq(carrier.dependencies.length, 1);
-        assertEq(carrier.dependencies[0].addr, addr);
-        assertEq(carrier.dependencies[0].constraints.length, 1);
-        assertEq(carrier.dependencies[0].constraints[0].slot, slot);
-        assertEq(carrier.dependencies[0].constraints[0].minValue, min);
-        assertEq(carrier.dependencies[0].constraints[0].maxValue, max);
+        assertEq(carrier._dependencies.length, 1);
+        assertEq(carrier._dependencies[0].addr, addr);
+        assertEq(carrier._dependencies[0].constraints.length, 1);
+        assertEq(carrier._dependencies[0].constraints[0].slot, slot);
+        assertEq(carrier._dependencies[0].constraints[0].minValue, min);
+        assertEq(carrier._dependencies[0].constraints[0].maxValue, max);
     }
 
     function testContraintMinMaxError(address addr, bytes32 slot, bytes32 min, bytes32 max) public {
