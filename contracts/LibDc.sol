@@ -453,11 +453,11 @@ library LibDc {
         Dc memory _c,
         uint256 _scalingFactor
     ) internal pure returns (Dc memory) {
-        if (_scalingFactor != _c.getOperation().baseFeeScalingFactor) {
+        if (_scalingFactor != _c.getOperation().feeScalingFactor) {
             revert("Scaling factor mismatch: "
                 .c(_scalingFactor)
                 .c(" != ".s())
-                .c(_c.getOperation().baseFeeScalingFactor)
+                .c(_c.getOperation().feeScalingFactor)
             );
         }
 
@@ -468,11 +468,11 @@ library LibDc {
         Dc memory _c,
         uint256 _normalizationFactor
     ) internal pure returns (Dc memory) {
-        if (_normalizationFactor != _c.getOperation().baseFeeNormalizationFactor) {
+        if (_normalizationFactor != _c.getOperation().feeNormalizationFactor) {
             revert("Normalization factor mismatch: "
                 .c(_normalizationFactor)
                 .c(" != ".s())
-                .c(_c.getOperation().baseFeeNormalizationFactor)
+                .c(_c.getOperation().feeNormalizationFactor)
             );
         }
 

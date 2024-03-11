@@ -48,8 +48,8 @@ interface IEndorser {
      * - `maxFeePerGas`: The maximum fee per gas willing to be paid for the operation.
      * - `maxPriorityFeePerGas`: The maximum priority fee per gas to incentivize miners.
      * - `feeToken`: The ERC-20 token address used for transaction fee payment. Uses `address(0)` for the native token.
-     * - `baseFeeScalingFactor`: A factor to scale the base fee, adjusting operation cost in response to network congestion.
-     * - `baseFeeNormalizationFactor`: A factor for normalizing the base fee, facilitating fee estimation.
+     * - `feeScalingFactor`: A factor to scale the base fee, adjusting operation cost in response to network congestion.
+     * - `feeNormalizationFactor`: A factor for normalizing the base fee, facilitating fee estimation.
      * - `hasUntrustedContext`: Indicates if the operation is executed in a context that cannot be fully trusted.
      */
     struct Operation {
@@ -61,8 +61,8 @@ interface IEndorser {
         uint256 maxFeePerGas;
         uint256 maxPriorityFeePerGas;
         address feeToken;
-        uint256 baseFeeScalingFactor;
-        uint256 baseFeeNormalizationFactor;
+        uint256 feeScalingFactor;
+        uint256 feeNormalizationFactor;
         bool hasUntrustedContext;
     }
 
