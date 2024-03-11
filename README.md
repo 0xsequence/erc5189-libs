@@ -11,7 +11,7 @@ For more information, see the [ERC-5189 specification](https://eips.ethereum.org
 
 The `LibDc` library contains functions for constructing dependency lists for ERC-5189 Endorsers, it uses a builder pattern that simplifies the process of creating dependencies.
 
-Create a `Dc` with the `create()`, an optional `IEndorser.Operation` can be passed to it, this will allow the library to also perform assertions on the operation.
+Create a `Dc` (DependencyCarrier) with the `create()`, an optional `IEndorser.Operation` can be passed to it, this will allow the library to also perform assertions on the operation.
 
 ```solidity
 import { Dc, LibDc } from "contracts/LibDc.sol";
