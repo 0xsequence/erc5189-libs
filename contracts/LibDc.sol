@@ -374,6 +374,21 @@ library LibDc {
         return _c;
     }
 
+    function requireInnerFixedGas(
+        Dc memory _c,
+        uint256 _innerFixedGas
+    ) internal pure returns (Dc memory) {
+        if (_innerFixedGas < _c.getOperation().fixedGas) {
+            revert("Inner fixed gas is less than operation fixed gas: "
+                .c(_innerFixedGas)
+                .c(" < ".s())
+                .c(_c.getOperation().fixedGas)
+            );
+        }
+
+        return _c;
+    }
+
     function requireInnerGasLimit(
         Dc memory _c,
         uint256 _innerGasLimit

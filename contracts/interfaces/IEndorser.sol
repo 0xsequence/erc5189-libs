@@ -43,6 +43,7 @@ interface IEndorser {
      * - `entrypoint`: The entrypoint address of the operation.
      * - `data`: The calldata to be sent to the entrypoint.
      * - `endorserCallData`: Additional data required for the endorser's processing.
+     * - `fixedGas`: The fixed gas amount to be used for the operation.
      * - `gasLimit`: The maximum gas allowed for executing the operation.
      * - `maxFeePerGas`: The maximum fee per gas willing to be paid for the operation.
      * - `maxPriorityFeePerGas`: The maximum priority fee per gas to incentivize miners.
@@ -55,6 +56,7 @@ interface IEndorser {
         address entrypoint;
         bytes data;
         bytes endorserCallData;
+        uint256 fixedGas;
         uint256 gasLimit;
         uint256 maxFeePerGas;
         uint256 maxPriorityFeePerGas;
