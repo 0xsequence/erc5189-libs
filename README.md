@@ -7,6 +7,11 @@ This repository contains libraries for interacting with [ERC-5189](https://eips.
 The `IEndorser` interface is an interface for ERC-5189 Endorsers.
 For more information, see the [ERC-5189 specification](https://eips.ethereum.org/EIPS/eip-5189).
 
+## IReceiptProvider
+
+The IReceiptProvider is an additional interface for ERC-5189 endorsers to provide operation receipts.
+For more information, see the [ERC-7655 specification](https://eips.ethereum.org/EIPS/eip-7655).
+
 ## LibDc
 
 The `LibDc` library contains functions for constructing dependency lists for ERC-5189 Endorsers, it uses a builder pattern that simplifies the process of creating dependencies.
