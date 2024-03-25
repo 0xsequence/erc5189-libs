@@ -12,7 +12,7 @@ interface IReceiptProvider {
   /// @return topics The event topics to filter logs on.
   function operationFilter(
     IEndorser.Operation calldata operation
-  ) external pure returns (
+  ) external view returns (
     address _address,
     bytes32[][] memory topics
   );
@@ -26,6 +26,7 @@ interface IReceiptProvider {
 
   /// @notice Event log
   struct Log {
+    address _address;
     bytes32[] topics;
     bytes data;
   }
@@ -39,7 +40,7 @@ interface IReceiptProvider {
   function operationReceipt(
     IEndorser.Operation calldata operation,
     Log[] calldata transactionLogs
-  ) external pure returns (
+  ) external view returns (
     Status status,
     Log[] memory operationLogs,
     uint256 gasUsed
