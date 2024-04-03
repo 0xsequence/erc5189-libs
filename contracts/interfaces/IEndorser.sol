@@ -87,5 +87,8 @@ interface IEndorser {
      * @notice Returns the simulation settings the bundler should use when calling the endorser.
      * @return replacements The replacements to apply when calling isOperationReady.
      */
-    function simulationSettings() external view returns (Replacement[] memory replacements);
+    function simulationSettings(Operation calldata operation)
+        external
+        view
+        returns (Replacement[] memory replacements);
 }
