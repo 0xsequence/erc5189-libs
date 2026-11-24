@@ -1,3 +1,11 @@
+<!-- archived-repository-notice -->
+> [!WARNING]
+> **This repository is archived and no longer maintained.**
+>
+> It is part of the legacy Sequence stack and is kept here for reference only.
+> It will not receive bug fixes, security patches or releases, and packages,
+> images or deployments built from it are not supported.
+
 # ERC5189 Libs
 
 This repository contains libraries for interacting with [ERC-5189](https://eips.ethereum.org/EIPS/eip-5189) contracts.
